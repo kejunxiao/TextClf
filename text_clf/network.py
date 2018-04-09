@@ -1,17 +1,20 @@
 """
 nerual nexwork
 """
-
+import numpy as np
 import tensorflow as tf
 import hyperparams as hp
 
 class Network(object):
     def __init__(self):
         self.inputs = tf.placeholder(dtype=tf.int32, shape=[None, hp.FORCED_SEQ_LEN],name='inputs')
-        self.labels = tf.placeholder(dtype=tf.int32, [None, hp.NUM_CLASSES], name='labels')
+        self.labels = tf.placeholder(dtype=tf.int32, shape=[None, hp.NUM_CLASSES], name='labels')
+        self.dropout_keep_prob = tf.placeholder(dtype=tf.float32, name='dropout_keep_prob')
 
     def construct_network(self):
         outputs = self.embed() # outputs dimension is (N, hp.FORCED_SEQ_LEN, hp.EMBED_SIZE, 1)
+        outputs = self.conv2d_banks(outputs)
+        pass
 
 
     def embed(self, scope='embedding', reuse=None):
@@ -26,7 +29,13 @@ class Network(object):
             embeded_inputs = tf.nn.embedding_lookup(lookup_table, self.inputs)
         return tf.expand_dims(embeded_inputs, -1) # add channel
 
-    def conv2d(self, inputs, filter_size, num_filters, scope='conv2d-maxpooling', reuse=None):
+    def conv2d(self, 
+               inputs, 
+               filter_size, 
+               num_filters, 
+               max_pool_size, 
+               scope='conv2d-maxpooling', 
+               reuse=None):
         with tf.variable_scope(scope=scope+'-{}'.format(filter_size), reuse=reuse):
             filter_shape = [filter_size, hp.EMBED_SIZE, 1, num_filters] #HWIO
             W = tf.get_variable(name='W-conv2d-%s' % filter_size, 
@@ -45,7 +54,32 @@ class Network(object):
             h = tf.nn.relu(tf.nn.bias_add(conv, b), name='relu')
             
             # maxpooling 
-            pooled = tf.nn.max_pool(h, )
+            pooled = tf.nn.max_pool(value=h, 
+                                    ksize=[1, max_pool_size, 1, 1], 
+                                    strides=[1, 1, 1, 1],
+                                    padding='VALID',
+                                    name='maxpool')
+        return pooled
+
+    def conv2d_banks(self, inputs, scope='banks', reuse=None):
+        with tf.variable_scope(scope=scope, reuse=reuse):
+            outputs = []
+            reduced = np.int32(np.ceil(hp.FORCED_SEQ_LEN * 1.0 / hp.MAX_POOL_SIZE))
+            for filter_size in hp.FILTERS_SIZE:
+                pooled = self.conv2d(inputs=inputs,
+                                     filter_size=filter_size,
+                                     num_filters=hp.NUM_FILTERS,
+                                     max_pool_size=hp.FORCED_SEQ_LEN - filter_size + 1)
+                outputs.append(pooled)
+            # residual connection
+            outputs = tf.concat(outputs, axis=3)
+            # dropout
+            outputs = tf.nn.dropout(outputs, self.dropout_keep_prob)
+        return outputs
+
+    def output_layer(self):
+        pass
+
             
 
 
