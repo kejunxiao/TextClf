@@ -2,4 +2,5 @@
     "python.pythonPath": "/home/shock/anaconda3/envs/py36tensorflow/bin/python",
     "terminal.integrated.shell.linux": "/bin/bash",
     "git.ignoreLimitWarning": true,
+    "editor.tabSize": 4,
 }
