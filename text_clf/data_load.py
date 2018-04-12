@@ -83,31 +83,33 @@ class DataLoad(object):
         df = pd.read_csv(self.data_path)
         selected_cols = ['Descript', 'Category']
         df = df.loc[:, selected_cols].dropna(axis=0, how='any')
+
         # construct label one-hot vectors
         labels = np.unique(
             np.array(df.loc[:, selected_cols[1]], dtype=np.object))
-        one_hot = np.zeros([len(labels), len(labels)], np.int32)
+        one_hot = np.zeros([len(labels), len(labels)], np.float)
         np.fill_diagonal(one_hot, 1)
         # {laebl: one hot vector for this label}
         labels2vec = dict(zip(labels, one_hot))
 
         raw_x = np.array(df.loc[:, selected_cols[0]].apply(
-            lambda x: DataLoad._clean_str(x).split(' ')))
-        self.y = np.array(df.loc[:, selected_cols[1]].apply(
-            lambda y: labels2vec[y]))
+            lambda x: DataLoad._clean_str(x).split(' ')), dtype=np.object)
+        raw_y = df.loc[:, selected_cols[1]].apply(
+            lambda y: labels2vec[y]).tolist()
 
         # padding sentence
-        paded_x = self._pad_sentence(raw_x)
-        token2id = self._build_vocab(paded_x)
+        padded_x = self._pad_sentence(raw_x)
+        token2id = self._build_vocab(padded_x)
         x = []
-        for sent in paded_x:
+        for sent in padded_x:
             xs = []
             for token in sent:
                 if token not in token2id:
                     token = '<OOV>'
-                xs.append([token2id[token]])
-            x.append(np.array(xs))
-        self.x = np.array(x)
+                xs.append(token2id[token])
+            x.append(xs)
+        self.x = np.array(x, dtype=np.int64)
+        self.y = np.array(raw_y, dtype=np.float)
 
     def _split_train_dev(self):
         # split train set or dev set
@@ -126,17 +128,17 @@ class DataLoad(object):
         if self.forced_seq_len is None:
             # forced_seq_len = max length of all sentences
             self.forced_seq_len = max([len(sent) for sent in sentences])
-        paded_sentences = []
+        padded_sentences = []
         for sent in sentences:
             if len(sent) < self.forced_seq_len:
-                paded_sent = sent + [padding_word] * \
-                    (self.forced_seq_len-len(sent))
+                sent.extend([padding_word] * (self.forced_seq_len-len(sent)))
+                padded_sent = sent
             elif len(sent) > self.forced_seq_len:
                 logging.info('Because the length of the sentence is larger the self.forced_seq_len,'
                              'so need to cut off the sentence.')
-                paded_sent = sent[:self.forced_seq_len]
-            paded_sentences.append(paded_sent)
-        return paded_sentences
+                padded_sent = sent[:self.forced_seq_len]
+            padded_sentences.append(padded_sent)
+        return padded_sentences
 
     def _build_vocab(self, sentences):
         tokens_count = Counter(itertools.chain(*sentences))
@@ -154,4 +156,8 @@ if __name__ == '__main__':
                           batch_size=params.BATCH_SIZE,
                           num_epochs=params.NUM_EPOCHS,
                           forced_seq_len=params.FORCED_SEQ_LEN)
-    print(next(train_data.batch_iter()))
+    batches = train_data.batch_iter()
+    batch_x, batch_y = next(batches)
+    # print(len(batches))
+    print(batch_x.shape)
+    print(batch_y.shape)

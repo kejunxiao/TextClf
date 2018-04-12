@@ -7,9 +7,9 @@ import tensorflow as tf
 class TextCNN(object):
     def __init__(self, forced_seq_len, vocab_size, embedding_size, filters_size_list,
                  num_filters, num_classes):
-        self.inputs = tf.placeholder(dtype=tf.int32, shape=[
+        self.inputs = tf.placeholder(dtype=tf.int64, shape=[
                                      None, forced_seq_len], name='inputs')
-        self.labels = tf.placeholder(dtype=tf.int32, shape=[
+        self.labels = tf.placeholder(dtype=tf.float32, shape=[
                                      None, num_classes], name='labels')
         self.dropout_keep_prob = tf.placeholder(
             dtype=tf.float32, name='dropout_keep_prob')
