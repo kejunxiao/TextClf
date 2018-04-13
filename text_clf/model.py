@@ -6,7 +6,7 @@ import tensorflow as tf
 
 class TextCNN(object):
     def __init__(self, forced_seq_len, vocab_size, embedding_size, filters_size_list,
-                 num_filters, num_classes):
+                 num_filters, num_classes, l2_reg_lambda=0.1):
         self.inputs = tf.placeholder(dtype=tf.int64, shape=[
                                      None, forced_seq_len], name='inputs')
         self.labels = tf.placeholder(dtype=tf.float32, shape=[
@@ -21,6 +21,7 @@ class TextCNN(object):
         self.filters_size_list = filters_size_list
         self.num_filters = num_filters
         self.num_classes = num_classes
+        self.l2_reg_lambda = l2_reg_lambda
 
         self.construct_network()
 
@@ -33,6 +34,7 @@ class TextCNN(object):
         with tf.variable_scope('loss'):
             self.loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(
                 logits=self.logits, labels=self.labels))
+            self.loss_op += self.l2_reg_lambda * self.l2_loss
 
         # accuracy
         with tf.variable_scope('accuracy'):
@@ -121,6 +123,8 @@ class TextCNN(object):
                                 shape=[self.num_classes],
                                 dtype=tf.float32,
                                 initializer=tf.truncated_normal_initializer(mean=0.0, stddev=0.01))
+            self.l2_loss = tf.nn.l2_loss(W)
+            self.l2_loss += tf.nn.l2_loss(b)
             self.logits = tf.nn.xw_plus_b(self.droped_h, W, b, name='logits')
             self.preds = tf.nn.softmax(self.logits, axis=1, name='preds')
         return self
