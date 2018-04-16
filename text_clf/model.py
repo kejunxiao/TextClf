@@ -28,7 +28,7 @@ class TextCNN(object):
     def construct_network(self):
         self.embed()  # outputs dimension is (N, self.forced_seq_len, self.embedding_size, 1)
         self.conv2d_banks()
-        self.output_layer()
+        self.outputs()
 
         # loss
         with tf.variable_scope('loss'):
@@ -112,7 +112,7 @@ class TextCNN(object):
             self.droped_h = tf.nn.dropout(h_pool_flat, self.dropout_keep_prob)
         return self
 
-    def output_layer(self, scope='output', reuse=None):
+    def outputs(self, scope='outputs', reuse=None):
         with tf.variable_scope(scope, reuse=reuse):
             W = tf.get_variable(name='W',
                                 shape=[self.droped_h.get_shape().as_list()

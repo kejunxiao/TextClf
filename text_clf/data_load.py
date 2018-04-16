@@ -8,13 +8,12 @@ import itertools
 from collections import Counter
 import numpy as np
 import pandas as pd
-import params
 
 
 class DataLoad(object):
     logging.getLogger().setLevel(logging.INFO)
 
-    def __init__(self, data_path, batch_size, num_epochs, forced_seq_len=None, dev_sample_rate=0.05):
+    def __init__(self, data_path, batch_size, num_epochs, dev_sample_rate, forced_seq_len=None):
         """
         params:
             data_path: source data path
@@ -161,10 +160,19 @@ class DataLoad(object):
 
 
 if __name__ == '__main__':
-    data = DataLoad(data_path=params.DATA_PATH,
-                          batch_size=params.BATCH_SIZE,
-                          num_epochs=params.NUM_EPOCHS,
-                          forced_seq_len=params.FORCED_SEQ_LEN)
+    params = {
+        'data_path': '../dataset/San_Francisco_Crime/train.csv.zip',
+        'batch_size': 32,
+        'num_epochs': 200,
+        'forced_seq_len': 14,
+        'dev_sample_rate':0.05
+    }
+    data = DataLoad(data_path=params['data_path'],
+                    batch_size=params['batch_size'],
+                    num_epochs=params['num_epochs'],
+                    forced_seq_len=params['forced_seq_len'],
+                    dev_sample_rate=params['dev_sample_rate'])
+
     batches = data.train_batch_iter()
     batch_x, batch_y = next(batches)
     # print(len(batches))

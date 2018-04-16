@@ -5,8 +5,8 @@ from evaluate import evaluate
 if __name__ == '__main__':
     # Parameters
     # Data loading parameters
-    tf.app.flags.DEFINE_float("dev_sample_rate", .2,
-                              "Percentage of the training data to use for validation")
+    tf.app.flags.DEFINE_float("dev_sample_rate", .05,
+                              "Percentage of the training data to use for validation(default:0.05)")
     tf.app.flags.DEFINE_string("train_data_path",
                                "../dataset/San_Francisco_Crime/train.csv.zip",
                                "Data source for the train data.")
@@ -30,8 +30,10 @@ if __name__ == '__main__':
                                 "if True , the mode is training, False is eval(default:True")
     tf.app.flags.DEFINE_integer("batch_size", 64, 
                                 "Batch Size (default: 64)")
-    tf.app.flags.DEFINE_integer("num_epochs", 200,
-                                "Number of training epochs (default: 200)")
+    tf.flags.DEFINE_integer("num_epochs", 200, 
+                            "Number of training epochs (default: 200)")
+    tf.app.flags.DEFINE_integer("max_to_keep", 5,
+                                "tf.train.Saver(max_to_keep) (default:5)")
     tf.app.flags.DEFINE_integer("evaluate_every", 100,
                                 "Evaluate model on dev set after this many steps (default: 100)")
 
